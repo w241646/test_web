@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>スコアクリアゲーム</title>
+  <style>
+    canvas {
+      background: #eef;
+      display: block;
+      margin: 30px auto;
+      border: 2px solid #333;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let bike = { x: 180, y: 530, width: 40, height: 40, speed: 6 };
+    let keys = {};
+    let score = 0;
+
+    // 🏁クリア条件（ここでスコアを変更できます）
+    let clearScore = 50;
+
+    // アイテム配列
+    let items = Array.from({ length: 5 }, () => ({
+      x: Math.random() * 360,
+      y: Math.random() * -600,
+      type: Math.random() > 0.5 ? "good" : "bad"
+    }));
+
+    document.addEventListener("keydown", e => keys[e.key] = true);
+    document.addEventListener("keyup", e => keys[e.key] = false);
+
+    function gameLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 自転車操作
+      if (keys["ArrowLeft"] && bike.x > 0) bike.x -= bike.speed;
+      if (keys["ArrowRight"] && bike.x < canvas.width - bike.width) bike.x += bike.speed;
+
+      // アイテム処理
+      items.forEach(item => {
+        item.y += 3;
+        ctx.fillStyle = item.type === "good" ? "green" : "red";
+        ctx.fillRect(item.x, item.y, 30, 30);
+
+        // 衝突判定
+        if (
+          bike.x < item.x + 30 &&
+          bike.x + bike.width > item.x &&
+          bike.y < item.y + 30 &&
+          bike.y + bike.height > item.y
+        ) {
+          score += item.type === "good" ? 10 : -10;
+          item.y = -40;
+          item.x = Math.random() * (canvas.width - 30);
+          item.type = Math.random() > 0.5 ? "good" : "bad";
+        }
+
+        if (item.y > canvas.height) {
+          item.y = -40;
+          item.x = Math.random() * (canvas.width - 30);
+          item.type = Math.random() > 0.5 ? "good" : "bad";
+        }
+      });
+
+      // 自転車描画
+      ctx.fillStyle = "blue";
+      ctx.fillRect(bike.x, bike.y, bike.width, bike.height);
+
+      // スコア表示
+      ctx.fillStyle = "black";
+      ctx.font = "20px sans-serif";
+      ctx.fillText("Score: " + score, 10, 30);
+
+      // 🎉クリア判定
+      if (score >= clearScore) {
+        ctx.fillStyle = "black";
+        ctx.font = "30px sans-serif";
+        ctx.fillText("🎉ゲームクリア！", 100, 300);
+        return; // ゲームループ停止
+      } else {
+        requestAnimationFrame(gameLoop);
+      }
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
